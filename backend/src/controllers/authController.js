@@ -44,3 +44,36 @@ export const register = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username?.trim() || username.length < 5 || username.length > 20) {
+            return res.status(400).json({ message: 'Username must be between 5 and 20 characters long' });
+        }
+        if (!password?.trim() || password.length < 5 || password.length > 20) {
+            return res.status(400).json({ message: 'Password must be between 5 and 20 characters long' });
+        }
+
+        const users = await readUSERS();
+        const userExists = users.find(user => user.username.toLowerCase() === username.trim().toLowerCase());
+        if (!userExists) {
+            return res.status(400).json({ message: 'Username not found' });
+        }
+        const isPasswordCorrect = await bcrypt.compare(password, userExists.password);
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ message: 'Incorrect password' });
+        }
+
+        const token = jwt.sign(
+            { id: userExists.id, username: userExists.username },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h', algorithm: 'HS256' }
+        );
+
+        res.status(200).json({ message: 'Login successful', token });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};

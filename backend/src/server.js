@@ -29,6 +29,7 @@ app.use(express.json());
 
 app.use(globalLimiter);
 app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/login", authLimiter);
 
 app.get("/", (req, res) => {
     res.status(200).json({
