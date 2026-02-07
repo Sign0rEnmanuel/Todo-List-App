@@ -77,3 +77,57 @@ export const login = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const updateUser = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword?.trim() || currentPassword.length < 5 || currentPassword.length > 20) {
+            return res.status(400).json({ message: 'Current password must be between 5 and 20 characters long' });
+        }
+        if (!newPassword?.trim() || newPassword.length < 5 || newPassword.length > 20) {
+            return res.status(400).json({ message: 'New password must be between 5 and 20 characters long' });
+        }
+        if (currentPassword === newPassword) {
+            return res.status(400).json({ message: 'New password must be different from current password' });
+        }
+
+        const users = await readUSERS();
+        const userIndex = users.findIndex(user => user.id === req.user.id);
+        if (userIndex === -1) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+
+        const currentUser = users[userIndex];
+        const isPasswordCorrect = await bcrypt.compare(currentPassword.trim(), currentUser.password);
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ message: 'Incorrect current password' });
+        }
+        currentUser.password = await bcrypt.hash(newPassword.trim(), 12);
+        currentUser.updatedAt = new Date().toISOString();
+
+        users[userIndex] = currentUser;
+        await writeUSERS(users);
+
+        const token = jwt.sign(
+            { id: currentUser.id, username: currentUser.username },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h', algorithm: 'HS256' }
+        )
+        res.status(200).json({
+            message: 'User updated successfully',
+            token: token,
+            user: {
+                id: currentUser.id,
+                username: currentUser.username,
+                updatedAt: currentUser.updatedAt,
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
