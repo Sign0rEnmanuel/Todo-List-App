@@ -4,6 +4,7 @@ import colors from "colors";
 import dotenv from "dotenv";
 import { rateLimit } from "express-rate-limit";
 import authRoute from "./routes/authRoute.js";
+import authTasks from "./routes/authTasks.js";
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.get("/", (req, res) => {
 })
 
 app.use("/api/auth", authRoute);
+app.use("/api/tasks", authTasks);
 
 app.listen(port, () => {
     console.log(colors.green("======================================================================"));

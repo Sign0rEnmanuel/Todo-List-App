@@ -26,7 +26,7 @@ export const register = async (req, res) => {
             password: hashedPassword,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            task: [],
+            tasks: [],
         };
 
         users.push(newUser);
