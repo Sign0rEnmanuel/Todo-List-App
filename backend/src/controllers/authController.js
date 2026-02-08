@@ -131,3 +131,36 @@ export const updateUser = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const deleteUser = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const { password } = req.body;
+        if (!password?.trim() || password.length < 5 || password.length > 20) {
+            return res.status(400).json({ message: 'Current password must be between 5 and 20 characters long' });
+        }
+
+        const users = await readUSERS();
+        const userIndex = users.findIndex(user => user.id === req.user.id);
+        if (userIndex === -1) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+
+        const user = users[userIndex];
+        const isPasswordCorrect = await bcrypt.compare(password.trim(), user.password);
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ message: 'Incorrect current password' });
+        }
+
+        users.splice(userIndex, 1);
+        await writeUSERS(users);
+
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Interval server error' })
+    }
+};
