@@ -1,6 +1,30 @@
 import { readUSERS, writeUSERS } from '../utils/fileHandler.js';
 import crypto from 'node:crypto';
 
+export const getTasks = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const users = await readUSERS();
+        const userIndex = users.findIndex(user => user.id === req.user.id);
+        if (userIndex === -1) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+        const user = users[userIndex];
+        if (!Array.isArray(user.tasks)) {
+            user.tasks = [];
+            return res.status(400).json({ message: 'User has no tasks' });
+        }
+
+        res.status(200).json({ message: 'Tasks retrieved successfully', tasks: user.tasks });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 export const createTask = async (req, res) => {
     try {
         if (!req.user) {

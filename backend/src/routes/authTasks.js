@@ -1,9 +1,10 @@
 import express from 'express';
-import { createTask, updateTask, completeTask, deleteTask } from '../controllers/taskController.js';
+import { getTasks, createTask, updateTask, completeTask, deleteTask } from '../controllers/taskController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+router.get('/get', authMiddleware, getTasks);
 router.post('/create', authMiddleware, createTask);
 router.put('/update/:id', authMiddleware, updateTask);
 router.put('/complete/:id', authMiddleware, completeTask);
