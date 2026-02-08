@@ -93,3 +93,54 @@ export const updateTask = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const completeTask = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ message: 'Task ID not found' });
+        }
+
+        const users = await readUSERS();
+        const userIndex = users.findIndex(user => user.id === req.user.id);
+        if (userIndex === -1) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+        const user = users[userIndex];
+        if (!Array.isArray(user.tasks)) {
+            return res.status(400).json({ message: 'User has no tasks' });
+        }
+        const taskIndex = user.tasks.findIndex(task => task.id === id);
+        if (taskIndex === -1) {
+            return res.status(400).json({ message: 'Task not found' });
+        }
+
+        const task = user.tasks[taskIndex];
+        let message;
+
+        if (task.status === 'pending') {
+            task.status = 'completed';
+            message = 'Task completed successfully';
+        } else if (task.status === 'completed') {
+            task.status = 'pending';
+            message = 'Task uncompleted successfully';
+        } else {
+            return res.status(400).json({ message: 'Invalid task status' });
+        }
+        task.updatedAt = new Date().toISOString();
+        user.updatedAt = new Date().toISOString();
+
+        user.tasks[taskIndex] = task;
+        users[userIndex] = user;
+        await writeUSERS(users);
+
+        res.status(200).json({ message, task });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
