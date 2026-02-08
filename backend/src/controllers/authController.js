@@ -16,7 +16,7 @@ export const register = async (req, res) => {
         const users = await readUSERS();
         const userExists = users.find(user => user.username.toLowerCase() === username.trim().toLowerCase());
         if (userExists) {
-            return res.status(400).json({ message: 'Username already exists' });
+            return res.status(409).json({ message: 'Username already exists' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
@@ -40,7 +40,7 @@ export const register = async (req, res) => {
 
         res.status(201).json({ message: 'User created successfully', token });
     } catch (error) {
-        console.log(error);
+        console.log('Register error:', error.message);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -58,11 +58,11 @@ export const login = async (req, res) => {
         const users = await readUSERS();
         const userExists = users.find(user => user.username.toLowerCase() === username.trim().toLowerCase());
         if (!userExists) {
-            return res.status(400).json({ message: 'Username not found' });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
         const isPasswordCorrect = await bcrypt.compare(password, userExists.password);
         if (!isPasswordCorrect) {
-            return res.status(400).json({ message: 'Incorrect password' });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const token = jwt.sign(
@@ -98,7 +98,7 @@ export const updateUser = async (req, res) => {
         const users = await readUSERS();
         const userIndex = users.findIndex(user => user.id === req.user.id);
         if (userIndex === -1) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         }
 
         const currentUser = users[userIndex];
@@ -146,7 +146,7 @@ export const deleteUser = async (req, res) => {
         const users = await readUSERS();
         const userIndex = users.findIndex(user => user.id === req.user.id);
         if (userIndex === -1) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         }
 
         const user = users[userIndex];
@@ -158,9 +158,9 @@ export const deleteUser = async (req, res) => {
         users.splice(userIndex, 1);
         await writeUSERS(users);
 
-        res.status(200).json({ message: 'User deleted successfully' });
+        res.status(200).json({ succes: true, message: 'User deleted successfully' });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: 'Interval server error' })
+        res.status(500).json({ message: 'Internal server error' })
     }
 };

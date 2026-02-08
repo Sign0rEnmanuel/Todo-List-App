@@ -6,17 +6,26 @@ export const authMiddleware = (req, res, next) => {
         if (!header) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
+        if (header.split(' ')[0] !== 'Bearer') {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
 
         const token = header.split(' ')[1];
         if (!token) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
         req.user = decoded;
         next();
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Internal server error' });
+        console.log('Auth middleware error:', error.message);
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Token expired' });
+        }
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ message: 'Invalid token' });
+        }
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };

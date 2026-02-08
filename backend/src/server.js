@@ -8,6 +8,11 @@ import authTasks from "./routes/authTasks.js";
 
 dotenv.config();
 
+if (!process.env.PORT) {
+    console.log(colors.red("Error: PORT environment variable not set"));
+    process.exit(1);
+}
+
 const app = express();
 const port = process.env.PORT;
 
@@ -16,6 +21,7 @@ const globalLimiter = rateLimit({
     max: 100,
     message: "Too many requests, please try again in 15 minutes",
     standardHeaders: true,
+    legacyHeaders: false,
 });
 
 const authLimiter = rateLimit({
@@ -23,6 +29,7 @@ const authLimiter = rateLimit({
     max: 10,
     message: "Too many try, please try again in 15 minutes",
     standardHeaders: true,
+    legacyHeaders: false,
 });
 
 app.use(cors());
@@ -40,6 +47,13 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoute);
 app.use("/api/tasks", authTasks);
+
+app.use((err, req, res, next) => {
+    console.error(colors.red("Error inesperado:"), err.stack);
+    res.status(500).json({
+        message: "Internal server error"
+    });
+});
 
 app.listen(port, () => {
     console.log(colors.green("======================================================================"));

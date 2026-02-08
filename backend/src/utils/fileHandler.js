@@ -9,19 +9,41 @@ const dbPath = path.join(__dirname, '../database/users.json');
 export const readUSERS = async () => {
     try {
         const data = await fs.readFile(dbPath, 'utf8');
-        return JSON.parse(data);
+        const parsed = JSON.parse(data);
+
+        if (!Array.isArray(parsed)) {
+            console.error('Error: Data is not an array');
+            return [];
+        }
+
+        return parsed;
     } catch (error) {
-        console.log(`Error: ${error.message}`);
-        return null;
+        if (error.code === 'ENOENT') {
+            console.warn('Warning: users.json not found, returning empty array');
+            await writeUSERS([]);
+            return [];
+        }
+        if (error instanceof SyntaxError) {
+            console.error('Error: users.json is not valid JSON');
+            await writeUSERS([]);
+            return [];
+        }
+        console.error(`Error: ${error.message}`);
+        return [];
     }
 };
 
 export const writeUSERS = async (data) => {
+    if (!Array.isArray(data)) {
+        console.error('Error: Data is not an array');
+        return false;
+    }
     try {
-        await fs.writeFile(dbPath, JSON.stringify(data, null, 4));
+        await fs.mkdir(path.dirname(dbPath), { recursive: true });
+        await fs.writeFile(dbPath, JSON.stringify(data, null, 4), 'utf8');
         return true;
     } catch (error) {
-        console.log(`Error: ${error.message}`);
+        console.error(`Error: ${error.message}`);
         return false;
     }
 };

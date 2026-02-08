@@ -10,7 +10,7 @@ export const getTasks = async (req, res) => {
         const users = await readUSERS();
         const userIndex = users.findIndex(user => user.id === req.user.id);
         if (userIndex === -1) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         }
         const user = users[userIndex];
         if (!Array.isArray(user.tasks)) {
@@ -42,7 +42,7 @@ export const createTask = async (req, res) => {
         const users = await readUSERS();
         const userIndex = users.findIndex(user => user.id === req.user.id);
         if (userIndex === -1) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         }
         const user = users[userIndex];
         if (!Array.isArray(user.tasks)) {
@@ -59,7 +59,6 @@ export const createTask = async (req, res) => {
         };
 
         user.tasks.push(task);
-        users[userIndex] = user;
         await writeUSERS(users);
 
         res.status(201).json({ message: 'Task created successfully', task });
@@ -77,7 +76,7 @@ export const updateTask = async (req, res) => {
 
         const { id } = req.params;
         if (!id) {
-            return res.status(400).json({ message: 'Task ID not found' });
+            return res.status(404).json({ message: 'Task ID not found' });
         }
 
         const { name, description } = req.body;
@@ -91,7 +90,7 @@ export const updateTask = async (req, res) => {
         const users = await readUSERS();
         const userIndex = users.findIndex(user => user.id === req.user.id);
         if (userIndex === -1) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         }
         const user = users[userIndex];
         if (!Array.isArray(user.tasks)) {
@@ -99,7 +98,7 @@ export const updateTask = async (req, res) => {
         }
         const taskIndex = user.tasks.findIndex(task => task.id === id);
         if (taskIndex === -1) {
-            return res.status(400).json({ message: 'Task not found' });
+            return res.status(404).json({ message: 'Task not found' });
         }
 
         const task = user.tasks[taskIndex];
@@ -107,10 +106,7 @@ export const updateTask = async (req, res) => {
         task.description = description.trim();
         task.updatedAt = new Date().toISOString();
 
-        user.tasks[taskIndex] = task;
-        users[userIndex] = user;
         await writeUSERS(users);
-
         res.status(200).json({ message: 'Task updated successfully', task });
     } catch (error) {
         console.error(error);
@@ -126,13 +122,13 @@ export const completeTask = async (req, res) => {
 
         const { id } = req.params;
         if (!id) {
-            return res.status(400).json({ message: 'Task ID not found' });
+            return res.status(404).json({ message: 'Task ID not found' });
         }
 
         const users = await readUSERS();
         const userIndex = users.findIndex(user => user.id === req.user.id);
         if (userIndex === -1) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found' });
         }
         const user = users[userIndex];
         if (!Array.isArray(user.tasks)) {
@@ -140,7 +136,7 @@ export const completeTask = async (req, res) => {
         }
         const taskIndex = user.tasks.findIndex(task => task.id === id);
         if (taskIndex === -1) {
-            return res.status(400).json({ message: 'Task not found' });
+            return res.status(404).json({ message: 'Task not found' });
         }
 
         const task = user.tasks[taskIndex];
@@ -158,10 +154,7 @@ export const completeTask = async (req, res) => {
         task.updatedAt = new Date().toISOString();
         user.updatedAt = new Date().toISOString();
 
-        user.tasks[taskIndex] = task;
-        users[userIndex] = user;
         await writeUSERS(users);
-
         res.status(200).json({ message, task });
     } catch (error) {
         console.error(error);
